@@ -351,7 +351,7 @@ void MainWindow::PrintMarkInfo(float bias, weights_data& W)
 void MainWindow::SearchMinimum(float b0, float b1, float w00, float w01, float w10, float w11,
                    float w20,float w21)
 {
-    const int n=10; //Столько случайных точек используется для начала поиска
+    const int n=30; //Столько случайных точек используется для начала поиска
     //Чтобы исключить схождение к локальному минимуму, проводим n поисков из разных точек диапазона
 
     weights_data W;
@@ -368,11 +368,11 @@ void MainWindow::SearchMinimum(float b0, float b1, float w00, float w01, float w
     for (int i=0; i<n; i++)
     {
         //Определяем i-ю случайную начальную точку
-        bias=(b1-b0)*(float)rand()/(float)RAND_MAX+b0;
+        //bias=(b1-b0)*(float)rand()/(float)RAND_MAX+b0;
+        bias = 1.397268;
         W.w[0]=(w01-w00)*(float)rand()/(float)RAND_MAX+w00;
         W.w[1]=(w11-w10)*(float)rand()/(float)RAND_MAX+w10;
         W.w[2]=(w21-w20)*(float)rand()/(float)RAND_MAX+w20;
-
         qDebug("%d/%d point (%f %f %f %f)",i+1,n,bias,W.w[0],W.w[1],W.w[2]);
 
         //Ищем минимум, начиная с найденной точки
@@ -430,7 +430,6 @@ float MainWindow::SearchFromPoint(float &bias, weights_data& W, float biasR, flo
     biasR*=0.5f;
     if (wR>0.1f) return SearchFromPoint(bias,W,biasR,wR); //Повторяем функцию для уменьшенного диапазона возле минимума
     else return last_er;
-
 }
 
 
