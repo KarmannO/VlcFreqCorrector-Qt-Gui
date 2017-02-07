@@ -98,11 +98,11 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    QString folder_name;
-    static const int img_n=25;
-    image_data test_img[img_n];
+    char* folder_name;
+    int img_n;
+    image_data *test_img;
     image_data ideal_img;
-    vec2 expert_marks[img_n]; //Диапазоны оценок эксперта
+    vec2 *expert_marks; //Диапазоны оценок эксперта
 
     float* mask;
     int mw;
@@ -117,7 +117,9 @@ private:
     void ComputeFreq();
     void ReadVectors();
     void ReadExpertMarks();
-    void ReadExpertMarksRange();    
+    void ReadExpertMarksRange();
+
+    int CountImagesInFolder(char *name, bool recursive, QStringList &files);
 
     float ComputeMarks(float b0, float b1, float w00, float w01, float w10, float w11, float w20, float w21,
                       int bn, int w0n, int w1n, int w2n, float& best_bias, weights_data& best_W);

@@ -5,6 +5,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+    folder_name = NULL;
     max_scale=2.5f;
     use_range=true;
 
@@ -28,7 +29,7 @@ void MainWindow::ComputeIdeals()
 {
     const int N=5;
     cFreqAnalysis fa;
-    FILE* f=fopen("KLU_1/Ideal/log.txt","wt");
+    FILE* f=fopen("KLU_1/ideal/log.txt","wt");
 
     char fname[256];
 
@@ -38,7 +39,7 @@ void MainWindow::ComputeIdeals()
 
     for (int i=0; i<N; i++)
     {
-        sprintf(fname,"KLU_1/Ideal/%02d.jpg",i);
+        sprintf(fname,"KLU_1/ideal/%02d.jpg",i);
 
         int iw,ih;
         float* img=LoadImage1f(fname,iw,ih);        
@@ -153,7 +154,42 @@ void MainWindow::ReadExpertMarksRange()
         ReadAmount(str,expert_marks[i][1],cur_pos);
     }
     delete[] str;
+}
 
+int MainWindow::CountImagesInFolder(char *name, bool recursive, QStringList & files)
+{
+    if(!recursive)
+    {
+        QDir d(name);
+        QStringList t;
+        t.append("*.png");
+        t.append("*.jpg");
+        t.append("*.jpeg");
+        QStringList files_list = d.entryList(t, QDir::Files);
+        return files_list.length();
+    }
+    else
+    {
+        QDir d(name);
+        QStringList dirs_list = d.entryList(QDir::Dirs);
+        if(dirs_list.length() <= 2)
+            return 0;
+        else
+        {
+            int total = 0;
+            QString root = QString(name);
+            for(int i = 2; i < dirs_list.length(); i++)
+            {
+                QString fold = root + "\\" + dirs_list.at(i);
+                char *new_fold = new char[fold.length() + 1];
+                new_fold[fold.length()] = '\0';
+                strcpy(new_fold, fold.toStdString().c_str());
+                QStringList p;
+                total += CountImagesInFolder(new_fold, false, p);
+            }
+            return total;
+        }
+    }
 }
 
 //Вычисляет характеристики изображений
@@ -368,14 +404,15 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_pushButton_clicked()
 {
+    /*img_n = 25;
+    expert_marks = new vec2[img_n];
+    test_img = new image_data[img_n];
     ComputeNames();
-    //ComputeIdeals(); //Это перестраивает файл идеальной х-ки (если файл уже есть, можно не вызывать)
-    //ComputeFreq(); //Это перестраивает файл характеристик изображений, если эти файлы есть, можно не вызывать
+    ComputeIdeals(); //Это перестраивает файл идеальной х-ки (если файл уже есть, можно не вызывать)
+    ComputeFreq(); //Это перестраивает файл характеристик изображений, если эти файлы есть, можно не вызывать
     ReadVectors(); //Читает идеальную характеристику и характеристики остальных изображений
 
-    //Читаем оценки: диапазоны или одиночные
-    if (!use_range) ReadExpertMarks();
-    else ReadExpertMarksRange();
+    ReadExpertMarksRange();
 
     float b0 = ui->b0_input->value();
     float b1 = ui->b1_input->value();
@@ -387,11 +424,19 @@ void MainWindow::on_pushButton_clicked()
     float w21 = ui->w21_input->value();
 
     //Ищем минимум смещения и весов групп частот с начальными приближениями в диапазоне, заданном в параметрах
-    SearchMinimum(b0, b1, w00, w01, w10, w11, w20, w21);
+    SearchMinimum(b0, b1, w00, w01, w10, w11, w20, w21);*/
 }
 
 void MainWindow::on_folder_button_clicked()
 {
-    folder_name = QFileDialog::getExistingDirectory(this, tr("Open folder"), "C:\\", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
-    ui->folder_open->setText(folder_name);
+    QString folder_name_s = QFileDialog::getExistingDirectory(this, tr("Open folder"), "C:\\", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    if(folder_name)
+        delete[] folder_name;
+    folder_name = new char[folder_name_s.length() + 1];
+    folder_name[folder_name_s.length()] = '\0';
+    strcpy(folder_name, folder_name_s.toStdString().c_str());
+    qDebug("Folder name changed on: %s", folder_name);
+    ui->folder_open->setText(folder_name_s);
+    QStringList files;
+    qDebug("Images in folder %d", CountImagesInFolder(folder_name, true, files));
 }
