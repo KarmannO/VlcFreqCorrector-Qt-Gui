@@ -389,3 +389,9 @@ void MainWindow::on_pushButton_clicked()
     //Ищем минимум смещения и весов групп частот с начальными приближениями в диапазоне, заданном в параметрах
     SearchMinimum(b0, b1, w00, w01, w10, w11, w20, w21);
 }
+
+void MainWindow::on_folder_button_clicked()
+{
+    folder_name = QFileDialog::getExistingDirectory(this, tr("Open folder"), "C:\\", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    ui->folder_open->setText(folder_name);
+}

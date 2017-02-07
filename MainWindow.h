@@ -94,9 +94,11 @@ public:
 private slots:
     void on_pushButton_clicked();
 
+    void on_folder_button_clicked();
+
 private:
     Ui::MainWindow *ui;
-
+    QString folder_name;
     static const int img_n=25;
     image_data test_img[img_n];
     image_data ideal_img;
