@@ -29,7 +29,9 @@ void MainWindow::ComputeIdeals()
 {
     const int N=5;
     cFreqAnalysis fa;
-    FILE* f=fopen("KLU_1/ideal/log.txt","wt");
+    QString folder = QString(folder_name);
+    QString pt = folder + "/ideal/log.txt";
+    FILE* f=fopen(pt.toStdString().c_str() ,"wt");
 
     char fname[256];
 
@@ -39,7 +41,8 @@ void MainWindow::ComputeIdeals()
 
     for (int i=0; i<N; i++)
     {
-        sprintf(fname,"KLU_1/ideal/%02d.jpg",i);
+        QString ppt = folder + "/ideal/%02d.jpg";
+        sprintf(fname,ppt.toStdString().c_str() ,i);
 
         int iw,ih;
         float* img=LoadImage1f(fname,iw,ih);        
@@ -95,9 +98,9 @@ void MainWindow::ComputeIdeals()
     fprintf(f,"\n");
 
     fclose(f);
-
-
-    f=fopen("KLU_1/_KLU1_ideal.txt","wt");
+    QDir d(folder);
+    QString pppt = folder + "/_" + d.dirName() + "_ideal.txt";
+    f=fopen(pppt.toStdString().c_str(),"wt");
     for (int i=0; i<M[0]; i++) fprintf(f,"%f\n",CF_m[i]);
     fclose(f);
 }
@@ -404,7 +407,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_pushButton_clicked()
 {
-    /*img_n = 25;
+    img_n = 25;
     expert_marks = new vec2[img_n];
     test_img = new image_data[img_n];
     ComputeNames();
@@ -424,7 +427,7 @@ void MainWindow::on_pushButton_clicked()
     float w21 = ui->w21_input->value();
 
     //Ищем минимум смещения и весов групп частот с начальными приближениями в диапазоне, заданном в параметрах
-    SearchMinimum(b0, b1, w00, w01, w10, w11, w20, w21);*/
+    SearchMinimum(b0, b1, w00, w01, w10, w11, w20, w21);
 }
 
 void MainWindow::on_folder_button_clicked()
@@ -438,5 +441,6 @@ void MainWindow::on_folder_button_clicked()
     qDebug("Folder name changed on: %s", folder_name);
     ui->folder_open->setText(folder_name_s);
     QStringList files;
-    qDebug("Images in folder %d", CountImagesInFolder(folder_name, true, files));
+    qDebug("Images in folder non-rec %d", CountImagesInFolder(folder_name, false, files));
+    qDebug("Images in folder rec %d", CountImagesInFolder(folder_name, true, files));
 }
