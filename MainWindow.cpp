@@ -9,8 +9,6 @@ MainWindow::MainWindow(QWidget *parent) :
     max_scale=2.5f;
     use_range=true;
 
-    mask=LoadImage1f("KLU_1/Ideal/mask.bmp",mw,mh);
-
     ui->setupUi(this);
 }
 
@@ -445,6 +443,11 @@ MainWindow::~MainWindow()
 void MainWindow::on_pushButton_clicked()
 {
     QString t(folder_name);
+    QString msk = (t + "/ideal/mask.bmp");
+    char *new_mask_src = new char[msk.length() + 1];
+    new_mask_src[msk.length()] = '\0';
+    strcpy(new_mask_src, msk.toStdString().c_str());
+    mask=LoadImage1f(new_mask_src, mw, mh);
     t += "/expert";
     char *to_change = new char[t.length() + 1];
     to_change[t.length()] = '\0';
