@@ -96,6 +96,8 @@ private slots:
 
     void on_folder_button_clicked();
 
+    void on_pushButton_2_clicked();
+
 private:
     Ui::MainWindow *ui;
     char* folder_name;
@@ -128,7 +130,7 @@ private:
     float ComputeMarksError();
     void PrintMarkInfo(float bias, weights_data& W);
     static void ReadF(char* filename, int &fn, float*&f);
-
+    void RemoveFile(QString name);
 
     void SearchMinimum(float b0, float b1, float w00, float w01, float w10, float w11,
                        float w20,float w21);

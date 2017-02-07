@@ -331,7 +331,9 @@ float MainWindow::ComputeMarks(float b0, float b1, float w00, float w01, float w
 void MainWindow::PrintMarkInfo(float bias, weights_data& W)
 {
     AssignMarks(bias,W);
-    FILE* f=fopen("KLU_1/auto_marks.txt","wt");
+    QString folder(folder_name);
+    folder += "/auto_marks.txt";
+    FILE* f=fopen(folder.toStdString().c_str(),"wt");
 
     float sum=0.0;
     for (int i=0; i<img_n; i++)
@@ -474,7 +476,7 @@ void MainWindow::on_pushButton_clicked()
 
 void MainWindow::on_folder_button_clicked()
 {
-    QString folder_name_s = QFileDialog::getExistingDirectory(this, tr("Open folder"), "C:\\", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    QString folder_name_s = QFileDialog::getExistingDirectory(this, tr("Open folder"), QDir::currentPath(), QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
     if(folder_name)
         delete[] folder_name;
     folder_name = new char[folder_name_s.length() + 1];
@@ -485,4 +487,24 @@ void MainWindow::on_folder_button_clicked()
     QStringList files;
     qDebug("Images in folder non-rec %d", CountImagesInFolder(folder_name, false, files));
     qDebug("Images in folder rec %d", CountImagesInFolder(folder_name, true, files));
+}
+
+void MainWindow::on_pushButton_2_clicked()
+{
+    QString dir_name = QDir(QString(folder_name)).dirName();
+    QString id = QString(folder_name) + "/_" + dir_name + "_ideal.txt";
+    QString auto_marks = QString(folder_name) + "/auto_marks.txt";
+    RemoveFile(id);
+    RemoveFile(auto_marks);
+    for(int i = 0; i < img_n; i++)
+    {
+        QString freq(test_img[i].f_name);
+        RemoveFile(freq);
+    }
+}
+
+void MainWindow::RemoveFile(QString name)
+{
+    QFile f(name);
+    f.remove();
 }
