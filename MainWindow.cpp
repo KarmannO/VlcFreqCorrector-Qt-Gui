@@ -16,13 +16,16 @@ MainWindow::MainWindow(QWidget *parent) :
 
 void MainWindow::ComputeNames()
 {
-    sprintf(ideal_img.f_name,"KLU_1/_KLU1_ideal.txt");
+    QString folder(folder_name);
+    QDir d(folder);
+    QString id = folder + "/_" + d.dirName() + "_ideal.txt";
+    sprintf(ideal_img.f_name, id.toStdString().c_str());
 
-    for (int i=0; i<img_n; i++)
-    {
-        sprintf(test_img[i].img_name,"KLU_1/volcanoes/KLU1_%d.jpg",i+1);
-        sprintf(test_img[i].f_name,"KLU_1/volcanoes/_KLU1_%d.jpg_freq.txt",i+1);
-    }
+    //for (int i=0; i<img_n; i++)
+    //{
+    //    sprintf(test_img[i].img_name,"KLU_1/volcanoes/KLU1_%d.jpg",i+1);
+    //    sprintf(test_img[i].f_name,"KLU_1/volcanoes/_KLU1_%d.jpg_freq.txt",i+1);
+    //}
 }
 
 void MainWindow::ComputeIdeals()
@@ -148,15 +151,47 @@ void MainWindow::ReadExpertMarks()
 //Читает диапазон оценок
 void MainWindow::ReadExpertMarksRange()
 {
-    unsigned int str_len;
-    char* str=LoadFileToStr("KLU_1/KLU1_manual_range.txt",str_len);
-    unsigned int cur_pos=0;
-    for (int i=0; i<img_n; i++)
+    int index = 0;
+    QString t(folder_name);
+    t += "/expert";
+    QStringList directories = QDir(t).entryList(QDir::Dirs);
+    if(directories.length() <= 2)
+        return;
+    else
     {
-        ReadAmount(str,expert_marks[i][0],cur_pos);
-        ReadAmount(str,expert_marks[i][1],cur_pos);
+        for(int i = 2; i < directories.length(); i++)
+        {
+            QString dir = directories.at(i);
+            vec2 range;
+            ParseDirNameIntoRange(dir, range);
+            qDebug("Range: [%f, %f]", range[0], range[1]);
+            QStringList pp;
+            pp.append("*.jpg");
+            QStringList images = QDir(t + '/' + dir).entryList(pp, QDir::Files);
+            for(int j = 0; j < images.length(); j++)
+            {
+                QString curr = t + "/" + dir + "/" + images.at(j);
+                QString freq = t + "/" + dir + "/_" + images.at(j) + "_freq.txt";
+                sprintf(test_img[index].img_name, curr.toStdString().c_str());
+                sprintf(test_img[index].f_name, freq.toStdString().c_str());
+                expert_marks[index][0] = range[0];
+                expert_marks[index][1] = range[1];
+                qDebug("Image %d sprintf success! img = %s, freq = %s", index, test_img[index].img_name,
+                       test_img[index].f_name);
+                qDebug("Image: %s , Range: [%f, %f]", images.at(j).toStdString().c_str(), range[0], range[1]);
+                index++;
+            }
+        }
     }
-    delete[] str;
+}
+
+void MainWindow::ParseDirNameIntoRange(QString name, vec2 &res)
+{
+    QStringList splitted = name.split('-');
+    QString t1 = splitted.at(0);
+    QString t2 = splitted.at(1);
+    res[0] = t1.toFloat();
+    res[1] = t2.toFloat();
 }
 
 int MainWindow::CountImagesInFolder(char *name, bool recursive, QStringList & files)
@@ -407,15 +442,22 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_pushButton_clicked()
 {
-    img_n = 25;
+    QString t(folder_name);
+    t += "/expert";
+    char *to_change = new char[t.length() + 1];
+    to_change[t.length()] = '\0';
+    strcpy(to_change, t.toStdString().c_str());
+    QStringList fls;
+    img_n = CountImagesInFolder(to_change, true, fls);
+    qDebug("Image num: %d", img_n);
+
     expert_marks = new vec2[img_n];
     test_img = new image_data[img_n];
+    ReadExpertMarksRange();
     ComputeNames();
     ComputeIdeals(); //Это перестраивает файл идеальной х-ки (если файл уже есть, можно не вызывать)
     ComputeFreq(); //Это перестраивает файл характеристик изображений, если эти файлы есть, можно не вызывать
     ReadVectors(); //Читает идеальную характеристику и характеристики остальных изображений
-
-    ReadExpertMarksRange();
 
     float b0 = ui->b0_input->value();
     float b1 = ui->b1_input->value();

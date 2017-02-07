@@ -118,6 +118,7 @@ private:
     void ReadVectors();
     void ReadExpertMarks();
     void ReadExpertMarksRange();
+    void ParseDirNameIntoRange(QString name, vec2 &res);
 
     int CountImagesInFolder(char *name, bool recursive, QStringList &files);
 
