@@ -468,6 +468,7 @@ void MainWindow::on_pushButton_clicked()
                ouput[i].w0, ouput[i].w1, ouput[i].w2,
                ouput[i].err);
         qDebug("=======================");
+
     }
 }
 
