@@ -8,6 +8,7 @@
 #include "ImageLoader.h"
 #include "IntensityStretch.h"
 #include <QFileDialog>
+#include <QVector>
 
 namespace Ui {
 class MainWindow;
@@ -32,6 +33,14 @@ struct image_data
     {
         delete[] f;
     }
+};
+
+struct output_data
+{
+    QString vlc;
+    float w0, w1, w2;
+    float b;
+    float err;
 };
 
 //Вместо масштбаного фактора используются раздельные веса для высоких, средних и низких частот
@@ -106,6 +115,8 @@ private:
     image_data ideal_img;
     vec2 *expert_marks; //Диапазоны оценок эксперта
 
+    QVector<output_data> ouput;
+
     float* mask;
     int mw;
     int mh;
@@ -124,6 +135,7 @@ private:
 
     int CountImagesInFolder(char *name, bool recursive, QStringList &files);
 
+    void CalcErrors();
     float ComputeMarks(float b0, float b1, float w00, float w01, float w10, float w11, float w20, float w21,
                       int bn, int w0n, int w1n, int w2n, float& best_bias, weights_data& best_W);
     void AssignMarks(float bias, weights_data& W);

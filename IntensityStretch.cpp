@@ -67,7 +67,7 @@ float StretchIntensity(float* img, int iw, int ih, float side_cut, float max_str
     float critical_len=1.0/max_stretch;
     float scale=right-left>critical_len?1.0/(right-left):max_stretch;
 
-    qDebug("Stretch: d[%f %f], cut[%f %f], scale=%f",min_v,max_v,left,right,scale);
+    //qDebug("Stretch: d[%f %f], cut[%f %f], scale=%f",min_v,max_v,left,right,scale);
 
     float center=(right-left)*0.5f; //Центр текущего диапазона
 
