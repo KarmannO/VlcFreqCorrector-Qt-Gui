@@ -401,11 +401,14 @@ void MainWindow::SearchMinimum(float b0, float b1, float w00, float w01, float w
     for (int i=0; i<n; i++)
     {
         //Определяем i-ю случайную начальную точку
-        //bias=(b1-b0)*(float)rand()/(float)RAND_MAX+b0;
-        bias = 1.397268;
+        bias=(b1-b0)*(float)rand()/(float)RAND_MAX+b0;
         W.w[0]=(w01-w00)*(float)rand()/(float)RAND_MAX+w00;
         W.w[1]=(w11-w10)*(float)rand()/(float)RAND_MAX+w10;
         W.w[2]=(w21-w20)*(float)rand()/(float)RAND_MAX+w20;
+        //bias = 1.387268;
+        //W.w[0]=7.037568;
+        //W.w[1]=96.661278;
+        //W.w[2]=68.318733;
         qDebug("%d/%d point (%f %f %f %f)",i+1,n,bias,W.w[0],W.w[1],W.w[2]);
 
         //Ищем минимум, начиная с найденной точки
