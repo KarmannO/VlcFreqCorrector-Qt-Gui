@@ -26,11 +26,10 @@ void MainWindow::ComputeNames()
     //}
 }
 
-void MainWindow::ComputeIdeals()
+void MainWindow::ComputeIdeals(QString folder)
 {
     const int N=5;
     cFreqAnalysis fa;
-    QString folder = QString(folder_name);
     QString pt = folder + "/ideal/log.txt";
     FILE* f=fopen(pt.toStdString().c_str() ,"wt");
 
@@ -127,9 +126,11 @@ void MainWindow::ReadF(char* filename, int &fn, float*&f)
 //Считывает характеристики изображений
 void MainWindow::ReadVectors()
 {
-    ReadF(ideal_img.f_name,ideal_img.fr_n,ideal_img.f);
-    for (int i=0; i<img_n; i++)    
+    //ReadF(ideal_img.f_name,ideal_img.fr_n,ideal_img.f);
+    for (int i=0; i<img_n; i++) {
+        ReadF(test_img[i].ideal_name, test_img[i].ideal_fr_n, test_img[i].ideal_f);
         ReadF(test_img[i].f_name,test_img[i].fr_n,test_img[i].f);
+    }
 }
 
 //Читает оценки эксперта
@@ -149,35 +150,45 @@ void MainWindow::ReadExpertMarks()
 //Читает диапазон оценок
 void MainWindow::ReadExpertMarksRange()
 {
-    int index = 0;
-    QString t(folder_name);
-    t += "/expert";
-    QStringList directories = QDir(t).entryList(QDir::Dirs);
-    if(directories.length() <= 2)
-        return;
-    else
+    int total_images = 0;
+    for(int i = 0; i < folders.length(); i++)
     {
-        for(int i = 2; i < directories.length(); i++)
+        QString curr_f = folders[i] + "/expert";
+        char *nm = new char[curr_f.length() + 1];
+        nm[curr_f.length() + 1] = '\0';
+        strcpy(nm, curr_f.toStdString().c_str());
+        int imgs = CountImagesInFolder(nm, true);
+        qDebug("Folder: %s, images: %d", nm, imgs);
+        total_images += imgs;
+    }
+    img_n = total_images;
+    expert_marks = new vec2[img_n];
+    test_img = new image_data[img_n];
+    int index = 0;
+    for(int i = 0; i < folders.length(); i++)
+    {
+        QString curr_f = folders[i] + "/expert";
+        QVector<QString> fldrs = GetFoldersInFolder(curr_f);
+        for(int j = 0; j < fldrs.length(); j++)
         {
-            QString dir = directories.at(i);
-            vec2 range;
-            ParseDirNameIntoRange(dir, range);
-            //qDebug("Range: [%f, %f]", range[0], range[1]);
-            QStringList pp;
-            pp.append("*.jpg");
-            QStringList images = QDir(t + '/' + dir).entryList(pp, QDir::Files);
-            for(int j = 0; j < images.length(); j++)
+            QVector<QString> imgs = GetImagesInFolder(fldrs[j]);
+            for(int k = 0; k < imgs.length(); k++)
             {
-                QString curr = t + "/" + dir + "/" + images.at(j);
-                QString freq = t + "/" + dir + "/_" + images.at(j) + "_freq.txt";
-                sprintf(test_img[index].img_name, curr.toStdString().c_str());
-                sprintf(test_img[index].f_name, freq.toStdString().c_str());
+                QString img_str = fldrs[j] + "/" + imgs[k];
+                QString freq_str = fldrs[j] + "/_" + imgs[k] + "_freq.txt";
+                QString id_str = folders[i] + "/_" + QDir(folders[i]).dirName() + "_ideal.txt";
+                sprintf(test_img[index].img_name, img_str.toStdString().c_str());
+                sprintf(test_img[index].f_name, freq_str.toStdString().c_str());
+                sprintf(test_img[index].ideal_name, id_str.toStdString().c_str());
+                vec2 range;
+                ParseDirNameIntoRange(QDir(fldrs[j]).dirName(), range);
                 expert_marks[index][0] = range[0];
                 expert_marks[index][1] = range[1];
                 index++;
             }
         }
     }
+    // Заполнить test_img[index].img_name, test_img[index].f_name, expert_marks[index]
 }
 
 void MainWindow::ParseDirNameIntoRange(QString name, vec2 &res)
@@ -189,7 +200,7 @@ void MainWindow::ParseDirNameIntoRange(QString name, vec2 &res)
     res[1] = t2.toFloat();
 }
 
-int MainWindow::CountImagesInFolder(char *name, bool recursive, QStringList & files)
+int MainWindow::CountImagesInFolder(char *name, bool recursive)
 {
     if(!recursive)
     {
@@ -217,12 +228,37 @@ int MainWindow::CountImagesInFolder(char *name, bool recursive, QStringList & fi
                 char *new_fold = new char[fold.length() + 1];
                 new_fold[fold.length()] = '\0';
                 strcpy(new_fold, fold.toStdString().c_str());
-                QStringList p;
-                total += CountImagesInFolder(new_fold, false, p);
+                total += CountImagesInFolder(new_fold, false);
             }
             return total;
         }
     }
+}
+
+QVector<QString> MainWindow::GetFoldersInFolder(QString fldr)
+{
+    QDir d(fldr);
+    QStringList entries = d.entryList(QDir::Dirs);
+    QVector<QString> result;
+    for(int i = 2; i < entries.length(); i++)
+    {
+        result.append(fldr + "/" + entries.at(i));
+    }
+    return result;
+}
+
+QVector<QString> MainWindow::GetImagesInFolder(QString fldr)
+{
+    QDir d(fldr);
+    QStringList l;
+    l.append("*.jpg");
+    QStringList entries = d.entryList(l, QDir::Files);
+    QVector<QString> res;
+    for(int i = 0; i < entries.length(); i++)
+    {
+        res.append(entries.at(i));
+    }
+    return res;
 }
 
 //Вычисляет характеристики изображений
@@ -251,9 +287,9 @@ void MainWindow::ComputeFreq()
 //Сравниваем характеристики всех изображений с эталонной на основе заданных смещений и весов
 void MainWindow::AssignMarks(float bias, weights_data& W)
 {
-    float* &b=ideal_img.f;
     for (int i=0; i<img_n; i++)
     {
+        float* &b=test_img[i].ideal_f;
         int &n=test_img[i].fr_n;
         float* &a=test_img[i].f;
 
@@ -370,12 +406,12 @@ void MainWindow::SearchMinimum(float b0, float b1, float w00, float w01, float w
         W.w[0]=(w01-w00)*(float)rand()/(float)RAND_MAX+w00;
         W.w[1]=(w11-w10)*(float)rand()/(float)RAND_MAX+w10;
         W.w[2]=(w21-w20)*(float)rand()/(float)RAND_MAX+w20;
-        //qDebug("%d/%d point (%f %f %f %f)",i+1,n,bias,W.w[0],W.w[1],W.w[2]);
+        qDebug("%d/%d point (%f %f %f %f)",i+1,n,bias,W.w[0],W.w[1],W.w[2]);
 
         //Ищем минимум, начиная с найденной точки
         float er=SearchFromPoint(bias,W,biasR,wR);
 
-        //qDebug("    reached (%f %f %f %f), er=%f",bias,W.w[0],W.w[1],W.w[2],er);
+        qDebug("    reached (%f %f %f %f), er=%f",bias,W.w[0],W.w[1],W.w[2],er);
 
         if (er<min_er)
         {
@@ -451,25 +487,35 @@ void MainWindow::on_pushButton_clicked()
     for(int i = 2; i < data_dirs.length(); i++)
     {
         QString fold = root_folder + "/" + data_dirs.at(i);
-        if(folder_name)
-            delete[] folder_name;
-        folder_name = new char[fold.length() + 1];
-        folder_name[fold.length()] = '\0';
-        strcpy(folder_name, fold.toStdString().c_str());
-        qDebug("Current folder: %s", folder_name);
-        CalcErrors();
-        qDebug("==========================");
+        folders.append(fold);
     }
-    for(int i = 0; i < ouput.length(); i++)
+    ReadExpertMarksRange();
+    for(int i = 0; i < folders.length(); i++)
     {
-        qDebug() << ouput[i].vlc;
-        qDebug("b = %f, W = (%f, %f, %f), min_err = %f",
-               ouput[i].b,
-               ouput[i].w0, ouput[i].w1, ouput[i].w2,
-               ouput[i].err);
-        qDebug("=======================");
+        QString curr = folders[i];
+        QString msk = (curr + "/ideal/mask.bmp");
+        char *new_mask_src = new char[msk.length() + 1];
+        new_mask_src[msk.length()] = '\0';
+        if(mask)
+            delete[] mask;
+        strcpy(new_mask_src, msk.toStdString().c_str());
+        mask = LoadImage1f(new_mask_src, mw, mh);
 
+        ComputeIdeals(curr);
     }
+    ComputeFreq();
+    ReadVectors();
+    float b0 = ui->b0_input->value();
+    float b1 = ui->b1_input->value();
+    float w00 = ui->w00_input->value();
+    float w01 = ui->w01_input->value();
+    float w10 = ui->w10_input->value();
+    float w11 = ui->w11_input->value();
+    float w20 = ui->w20_input->value();
+    float w21 = ui->w21_input->value();
+
+    //Ищем минимум смещения и весов групп частот с начальными приближениями в диапазоне, заданном в параметрах
+    SearchMinimum(b0, b1, w00, w01, w10, w11, w20, w21);
 }
 
 void MainWindow::on_folder_button_clicked()
@@ -497,15 +543,14 @@ void MainWindow::CalcErrors()
     char *to_change = new char[t.length() + 1];
     to_change[t.length()] = '\0';
     strcpy(to_change, t.toStdString().c_str());
-    QStringList fls;
-    img_n = CountImagesInFolder(to_change, true, fls);
+    img_n = CountImagesInFolder(to_change, true);
     qDebug("Image num: %d", img_n);
 
     expert_marks = new vec2[img_n];
     test_img = new image_data[img_n];
     ReadExpertMarksRange();
-    ComputeNames();
-    ComputeIdeals(); //Это перестраивает файл идеальной х-ки (если файл уже есть, можно не вызывать)
+    //ComputeNames();
+    //ComputeIdeals(); //Это перестраивает файл идеальной х-ки (если файл уже есть, можно не вызывать)
     ComputeFreq(); //Это перестраивает файл характеристик изображений, если эти файлы есть, можно не вызывать
     ReadVectors(); //Читает идеальную характеристику и характеристики остальных изображений
 

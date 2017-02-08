@@ -21,17 +21,24 @@ struct image_data
     int fr_n;
     float* f;
     float mark;
+    int ideal_fr_n;
+    float *ideal_f;
+    char ideal_name[256];
 
     image_data()
     {
         img_name[0]=0;
         f_name[0]=0;
+        ideal_name[0] = 0;
+        ideal_fr_n = 0;
         fr_n=0;
         f=NULL;
+        ideal_f = NULL;
     }    
     ~image_data()
     {
         delete[] f;
+        delete[] ideal_f;
     }
 };
 
@@ -116,6 +123,7 @@ private:
     vec2 *expert_marks; //Диапазоны оценок эксперта
 
     QVector<output_data> ouput;
+    QVector<QString> folders;
 
     float* mask;
     int mw;
@@ -125,7 +133,7 @@ private:
     bool use_range; //Использовать диапазон оценок    
 
 
-    void ComputeIdeals();
+    void ComputeIdeals(QString folder);
     void ComputeNames();
     void ComputeFreq();
     void ReadVectors();
@@ -133,7 +141,10 @@ private:
     void ReadExpertMarksRange();
     void ParseDirNameIntoRange(QString name, vec2 &res);
 
-    int CountImagesInFolder(char *name, bool recursive, QStringList &files);
+    int CountImagesInFolder(char *name, bool recursive);
+
+    QVector<QString> GetFoldersInFolder(QString fldr);
+    QVector<QString> GetImagesInFolder(QString fldr);
 
     void CalcErrors();
     float ComputeMarks(float b0, float b1, float w00, float w01, float w10, float w11, float w20, float w21,
